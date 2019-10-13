@@ -1,4 +1,5 @@
 import datetime as dt
+import requests
 
 DATABASE = {
     'Сергей': 'Омск',
@@ -51,6 +52,22 @@ def what_time(city):
     return f_time
 
 
+def what_weather(city):
+    url = f'http://wttr.in/{city}'
+    weather_parameters = {
+        'format': 2,
+        'M': ''
+    }
+    try:
+        response = requests.get(url, params=weather_parameters)
+    except requests.ConnectionError:
+        return '<сетевая ошибка>'
+    if response.status_code == 200:
+        return response.text.strip()
+    else:
+        return '<ошибка на сервере погоды>'
+
+
 def process_anfisa(query):
     if query == 'сколько у меня друзей?':
         count_string = format_count_friends(len(DATABASE))
@@ -74,13 +91,12 @@ def process_friend(name, query):
         elif query == 'который час?':
             if city not in UTC_OFFSET:
                 return f'<не могу определить время в городе {city}>'
-            else:
-                time_city = what_time(city)
-                return f'Там сейчас {time_city}'
-
+            time = what_time(city)
+            return f'Там сейчас {time}'
+        elif query == 'как погода?':
+            return city, what_weather(city)
         else:
             return '<неизвестный запрос>'
-
     else:
         return f'У тебя нет друга по имени {name}'
 
@@ -106,7 +122,10 @@ def runner():
         'Алексей, который час?',
         'Артём, который час?',
         'Антон, который час?',
-        'Петя, который час?'
+        'Петя, который час?',
+        'Коля, как погода?',
+        'Соня, как погода?',
+        'Антон, как погода?'
     ]
     for query in queries:
         print(query, '-', process_query(query))
